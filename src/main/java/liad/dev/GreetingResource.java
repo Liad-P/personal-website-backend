@@ -10,7 +10,7 @@ import jakarta.ws.rs.core.MediaType;
 @Path("/hello")
 public class GreetingResource {
 
-    @ConfigProperty(name = "api.secret.key")
+    @ConfigProperty(name = "api.secret.key", defaultValue = "Unknown API key")
     String apiKey;
 
     @GET
@@ -18,12 +18,5 @@ public class GreetingResource {
     public String hello() {
         System.out.println(apiKey);
         return "Hello from Quarkus REST";
-    }
-
-    @Path("/api")
-    @GET
-    @Produces(MediaType.TEXT_PLAIN)
-    public String getAPIKey() {
-        return apiKey;
     }
 }

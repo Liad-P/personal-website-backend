@@ -21,7 +21,7 @@ public class AIGoogleClient implements AIClient {
     private final String modelString;
 
     AIGoogleClient() {
-        this.modelString = "gemini-2.0-flash-001";
+        this.modelString = "gemini-2.5-flash-lite-preview-06-17";
     }
 
     @PostConstruct

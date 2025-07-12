@@ -17,13 +17,13 @@ public class AIResources {
 
     @Path("/generate")
     @POST
-    @Produces(MediaType.TEXT_PLAIN)
-    public String generateString(Prompt prompt) {
-        return aiClient.generate(prompt.prompt, null);
+    @Produces(MediaType.APPLICATION_JSON)
+    public AIResponse generateString(Prompt prompt) {
+        return new AIResponse(aiClient.generate(prompt.prompt, null));
     }
 
-    public record Prompt(String prompt) {
-        
-    }
+    public record Prompt(String prompt) {}
+    
+    public record AIResponse(String AiResponse){}
     
 }
