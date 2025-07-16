@@ -22,6 +22,7 @@ dependencies {
 
     testImplementation 'io.quarkus:quarkus-junit5'
     testImplementation 'io.rest-assured:rest-assured'
+    testImplementation 'io.quarkus:quarkus-junit5-mockito'
 }
 
 group 'liad.dev'
@@ -33,7 +34,12 @@ java {
 }
 
 test {
+    useJUnitPlatform()
     systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
+    testLogging {
+        events "passed", "skipped", "failed"
+        showStandardStreams = true
+    }
 }
 compileJava {
     options.encoding = 'UTF-8'

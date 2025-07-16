@@ -13,6 +13,9 @@ import jakarta.annotation.PostConstruct;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import jakarta.enterprise.context.ApplicationScoped;
+
+@ApplicationScoped
 public class GoogleDocumentLoader implements DocumentLoader {
 
     @ConfigProperty(name = "gcp.bucket", defaultValue = "Unknown bucket")
@@ -40,7 +43,12 @@ public class GoogleDocumentLoader implements DocumentLoader {
         try {
             blob = this.bucket.get(documentId);
         } catch (StorageException e) {
-            throw new DocumentNotFound(String.format("Document not found in bucket: %s with ID: %s", targetBucket, documentId));
+            throw new DocumentNotFound(
+                    String.format("Document not found in bucket: %s with ID: %s", targetBucket, documentId));
+        }
+        if (blob == null) {
+            throw new DocumentNotFound(
+                    String.format("Document not found in bucket: %s with ID: %s", targetBucket, documentId));
         }
         byte[] blobContent = blob.getContent();
 
