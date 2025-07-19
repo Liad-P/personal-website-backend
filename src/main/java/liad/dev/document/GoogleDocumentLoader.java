@@ -1,10 +1,11 @@
-package liad.dev;
+package liad.dev.document;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -21,6 +22,7 @@ import jakarta.annotation.PostConstruct;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import liad.dev.exceptions.DocumentNotFound;
 
 @ApplicationScoped
 public class GoogleDocumentLoader implements DocumentLoader {
@@ -37,6 +39,8 @@ public class GoogleDocumentLoader implements DocumentLoader {
     Storage storage;
     Bucket bucket;
     Credentials credentials;
+
+    private Map<String, ByteBuffer> documentCache = new HashMap<>();
 
     GoogleDocumentLoader(){}
     
@@ -80,7 +84,13 @@ public class GoogleDocumentLoader implements DocumentLoader {
     }    
 
     @Override
-    public List<ByteBuffer> load(String documentId) throws DocumentNotFound {
+    public ByteBuffer load(String documentId) throws DocumentNotFound {
+
+        if (documentCache.containsKey(documentId)) {
+            Log.info("Document with ID: " + documentId + " found in cache.");
+            return documentCache.get(documentId);
+        }
+
         Blob blob = null;
         try {
             blob = this.bucket.get(documentId);
@@ -105,7 +115,11 @@ public class GoogleDocumentLoader implements DocumentLoader {
         Log.info("Document with ID: " + documentId + " loaded successfully from bucket.");
         
         ByteBuffer byteBuffer = ByteBuffer.wrap(blobContent);
-        return List.of(byteBuffer);
+
+        // Cache the loaded document
+        documentCache.put(documentId, byteBuffer);
+
+        return byteBuffer;
     }
     
 }

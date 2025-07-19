@@ -1,8 +1,11 @@
-package liad.dev;
+package liad.dev.ai.client;
 
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
+
+import liad.dev.ai.chat.IChatSession;
+
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -11,6 +14,18 @@ import java.util.concurrent.CompletableFuture;
  * embeddings.
  */
 public interface AIClient {
+
+    /**
+     * Create a new chat session with the AI model.
+     */
+    IChatSession createChatSession();
+
+    /**
+     * Create a new chat session with the AI model.
+     * @param sessionId An optional session ID to use for the chat session.
+     */
+    IChatSession createChatSession(String sessionId);
+
 
     /**
      * Generates a single, complete response for a given prompt.
@@ -84,4 +99,16 @@ public interface AIClient {
      * @return A List of vector embeddings.
      */
     List<List<Float>> embedBatch(List<String> texts);
+
+    public static String generateSystemPrompt(String name) {
+        return String.format("""
+            You are a helpful assistant.
+            Please provide concise and accurate responses to user queries based on the information you have access to.
+            Your job is to answer user questions about %s's personal website and related topics.
+            Your responses should be informative and convincing about the skills and experiences of %s.
+            Keep strictly to the information provided in the documents you have access to.
+            If you do not know the answer, say "I don't know" or "I don't have that information".
+            If the user asks for information not related to %s, say "I don't know".
+            """, name, name, name);
+    }
 }

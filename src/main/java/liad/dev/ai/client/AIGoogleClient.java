@@ -1,15 +1,22 @@
-package liad.dev;
+package liad.dev.ai.client;
 
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
+
+import com.google.genai.Chat;
 import com.google.genai.Client;
+import com.google.genai.types.Content;
+import com.google.genai.types.GenerateContentConfig;
+import com.google.genai.types.Part;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
+import liad.dev.ai.chat.ChatSessionGemini;
+import liad.dev.ai.chat.IChatSession;
 
 @ApplicationScoped
 public class AIGoogleClient implements AIClient {
@@ -17,16 +24,36 @@ public class AIGoogleClient implements AIClient {
     @ConfigProperty(name = "ai.api.key", defaultValue = "Unknown API key")
     String apikeyString;
 
+    @ConfigProperty(name = "owner.name", defaultValue = "Unknown API key")
+    String ownerName;
+
     private Client client;
     private final String modelString;
 
     AIGoogleClient() {
         this.modelString = "gemini-2.5-flash-lite-preview-06-17";
     }
+    
+    AIGoogleClient(String AIModelString) {
+        this.modelString = AIModelString;
+    }
 
     @PostConstruct
     void initialize() {
         this.client = Client.builder().apiKey(apikeyString).build();
+    }
+
+    Chat initializeChat() {
+        return this.initializeChat(this.modelString);
+    }
+
+    Chat initializeChat(String modelToUse) {
+        GenerateContentConfig config = GenerateContentConfig.builder()
+            .systemInstruction(Content.fromParts(Part.fromText(AIClient.generateSystemPrompt(
+                        ownerName))))
+                .build();
+        Chat chat = this.client.chats.create(modelToUse, config);
+        return chat;
     }
 
     @Override
@@ -87,6 +114,16 @@ public class AIGoogleClient implements AIClient {
     public List<List<Float>> embedBatch(List<String> texts) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'embedBatch'");
+    }
+
+    @Override
+    public IChatSession createChatSession() {
+        return new ChatSessionGemini(this.initializeChat());
+    }
+
+    @Override
+    public IChatSession createChatSession(String sessionId) {
+        return new ChatSessionGemini(this.initializeChat(), sessionId);
     }
     
 }

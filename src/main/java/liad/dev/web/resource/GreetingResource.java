@@ -1,4 +1,4 @@
-package liad.dev;
+package liad.dev.web.resource;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 

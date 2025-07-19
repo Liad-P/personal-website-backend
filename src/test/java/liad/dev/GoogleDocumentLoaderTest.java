@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -14,6 +13,8 @@ import org.junit.jupiter.api.Test;
 
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import liad.dev.document.GoogleDocumentLoader;
+import liad.dev.exceptions.DocumentNotFound;
 
 @Tag("integration")
 @QuarkusTest
@@ -25,9 +26,9 @@ public class GoogleDocumentLoaderTest {
     @Test
     public void testLoadDocument() throws DocumentNotFound {
         // The bucket and project ID are configured in application.properties for the test profile
-        List<ByteBuffer> pages = documentLoader.load("Liad-Peretz-CV.pdf");
-        assertNotNull(pages);
-        assertFalse(pages.isEmpty());
+        ByteBuffer pdf = documentLoader.load("Liad-Peretz-CV.pdf");
+        assertNotNull(pdf);
+        assertFalse(pdf.array().length > 0, "Loaded PDF should not be empty");
         // Further checks can be added here, like checking the content of the PDF.
     }
 
