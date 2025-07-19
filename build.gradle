@@ -34,13 +34,42 @@ java {
 }
 
 test {
-    useJUnitPlatform()
+    useJUnitPlatform(){
+        excludeTags 'integration'
+    }
     systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
     testLogging {
         events "passed", "skipped", "failed"
         showStandardStreams = true
     }
 }
+
+task integrationTest(type: Test) {
+    description = 'Runs integration tests tagged with @Tag("integration")'
+    group = 'verification'
+
+    useJUnitPlatform {
+        includeTags 'integration'
+    }
+
+    // Means if both test and integrationTest are scheduled to run, test will run first
+    shouldRunAfter test
+
+    systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
+    testLogging {
+        events "passed", "skipped", "failed"
+        showStandardStreams = true
+    }
+    // The following config is needed because: 
+    // Gradle does not automatically assume:
+    // - which test classes to run (testClassesDirs), or
+    // - which classpath to use (classpath) 
+    // Tells Gradle where the compiled test classes are
+    testClassesDirs = sourceSets.test.output.classesDirs
+    // Runtime classpath: test dependencies, Quarkus libs, etc.
+    classpath = sourceSets.test.runtimeClasspath
+}
+
 compileJava {
     options.encoding = 'UTF-8'
     options.compilerArgs << '-parameters'

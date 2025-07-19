@@ -8,11 +8,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+
 
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
+@Tag("integration")
 @QuarkusTest
 public class GoogleDocumentLoaderTest {
 

@@ -1,8 +1,13 @@
 package liad.dev;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import com.google.auth.Credentials;
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
@@ -21,21 +26,51 @@ public class GoogleDocumentLoader implements DocumentLoader {
     @ConfigProperty(name = "gcp.bucket", defaultValue = "Unknown bucket")
     String targetBucket;
 
-    @ConfigProperty(name = "gcp.project.id", defaultValue = "Unknown bucket")
+    @ConfigProperty(name = "gcp.project.id", defaultValue = "Unknown project id")
     String targetProjectID;
+
+    @ConfigProperty(name = "google.application.credentials.file", defaultValue = "Unknown")
+    String credentialsPath;
 
     Storage storage;
     Bucket bucket;
+    Credentials credentials;
 
-    GoogleDocumentLoader() {
-    }
+    GoogleDocumentLoader(){}
     
     @PostConstruct
     void initialize() {
-        this.storage = StorageOptions.newBuilder().setProjectId(targetProjectID).build().getService();
+        if (credentialsPath == null || credentialsPath.isEmpty() || credentialsPath.equals("Unknown")) {
+            // Using application default credentials
+            // The env variable GOOGLE_APPLICATION_CREDENTIALS should be set to the path of the credentials file
+            // or the application should be running in an environment where the default credentials are available (e.g., Google Cloud Platform)
+            try {
+                this.storage = StorageOptions.newBuilder().setCredentials(GoogleCredentials.getApplicationDefault()).setProjectId(targetProjectID).build().getService();
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to initialize Google Cloud Storage client with application default authentication: " + e.getMessage(), e);
+            }
+        }
+        else{
+            try {
+                System.out.println("Using credentials from path: " + credentialsPath);
+                this.storage = StorageOptions.newBuilder()
+                        .setProjectId(targetProjectID)
+                        .setCredentials(GoogleCredentials.fromStream(new FileInputStream(credentialsPath)))
+                        .build()
+                        .getService();
+
+            } 
+            catch (FileNotFoundException e) {
+                throw new RuntimeException("Credentials file not found at path: " + credentialsPath, e);
+            }
+            catch (IOException e) {
+                throw new RuntimeException(
+                        "Failed to initialize Google Cloud Storage client with provided credentials: " + e.getMessage(),
+                        e);
+            } 
+        }
         this.bucket = this.storage.get(targetBucket);
     }    
-
 
     @Override
     public List<ByteBuffer> load(String documentId) throws DocumentNotFound {
@@ -59,7 +94,6 @@ public class GoogleDocumentLoader implements DocumentLoader {
         
         ByteBuffer byteBuffer = ByteBuffer.wrap(blobContent);
         return List.of(byteBuffer);
-
     }
     
 }
