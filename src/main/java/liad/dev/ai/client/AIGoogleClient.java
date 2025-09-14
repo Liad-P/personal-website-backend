@@ -11,6 +11,8 @@ import com.google.genai.types.Content;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.Part;
 
+import io.quarkus.logging.Log;
+
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import jakarta.annotation.PostConstruct;
@@ -21,25 +23,31 @@ import liad.dev.ai.chat.IChatSession;
 @ApplicationScoped
 public class AIGoogleClient implements AIClient {
 
-    @ConfigProperty(name = "ai.api.key", defaultValue = "Unknown API key")
+    @ConfigProperty(name = "AI_API_KEY", defaultValue = "Unknown API key")
     String apikeyString;
 
-    @ConfigProperty(name = "owner.name", defaultValue = "Unknown API key")
+    @ConfigProperty(name = "OWNER_NAME", defaultValue = "Unknown API key")
     String ownerName;
-
-    private Client client;
-    private final String modelString;
-
-    AIGoogleClient() {
-        this.modelString = "gemini-2.5-flash-lite-preview-06-17";
-    }
     
-    AIGoogleClient(String AIModelString) {
+    private Client client;
+
+    private final String modelString;
+    
+    AIGoogleClient(@ConfigProperty(name = "DEFAULT_LLM", defaultValue = "gemini-2.5-flash-lite") String AIModelString) {
+        Log.info("Set Google model client to use model: " + AIModelString);
         this.modelString = AIModelString;
+        Log.info(this.modelString);
     }
 
     @PostConstruct
     void initialize() {
+        if (apikeyString == null || apikeyString.equals("Unknown API key")) {
+            Log.error("API key is not set. Please configure 'AI_API_KEY' in your application properties.");
+            throw new IllegalStateException(
+                    "API key is not set. Please configure 'AI_API_KEY' in your application properties.");
+        }
+        Log.info("Initializing AIGoogleClient with API key.");
+        Log.info(apikeyString);
         this.client = Client.builder().apiKey(apikeyString).build();
     }
 
@@ -48,12 +56,12 @@ public class AIGoogleClient implements AIClient {
     }
 
     Chat initializeChat(String modelToUse) {
+        Log.info("Initializing chat with model: " + modelToUse);
         GenerateContentConfig config = GenerateContentConfig.builder()
             .systemInstruction(Content.fromParts(Part.fromText(AIClient.generateSystemPrompt(
                         ownerName))))
                 .build();
-        Chat chat = this.client.chats.create(modelToUse, config);
-        return chat;
+        return this.client.chats.create(modelToUse, config);
     }
 
     @Override

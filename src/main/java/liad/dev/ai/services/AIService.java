@@ -29,11 +29,11 @@ public class AIService {
 
     final String defaultSessionID = "default-session";
 
-    public IChatSession initialize() {
-        return this.initialize(this.defaultSessionID);
+    public IChatSession initializeChatSession() {
+        return this.initializeChatSession(this.defaultSessionID);
     }
 
-    public IChatSession initialize(String sessionID) {
+    public IChatSession initializeChatSession(String sessionID) {
         var chatSession = aiClient.createChatSession(sessionID);
         this.documents.forEach(document -> {
             try {

@@ -27,10 +27,10 @@ import liad.dev.exceptions.DocumentNotFound;
 @ApplicationScoped
 public class GoogleDocumentLoader implements DocumentLoader {
 
-    @ConfigProperty(name = "gcp.bucket", defaultValue = "Unknown bucket")
+    @ConfigProperty(name = "GCP_BUCKET", defaultValue = "Unknown bucket")
     String targetBucket;
 
-    @ConfigProperty(name = "gcp.project.id", defaultValue = "Unknown project id")
+    @ConfigProperty(name = "GCP_PROJECT_ID", defaultValue = "Unknown project id")
     String targetProjectID;
 
     @ConfigProperty(name = "google.application.credentials.file", defaultValue = "Unknown")
