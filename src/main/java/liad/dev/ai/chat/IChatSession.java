@@ -21,6 +21,13 @@ public interface IChatSession {
     void addPDF(Object pdf);
 
     /**
+     * Adds a markdown document to the chat session.
+     *
+     * @param markdown the markdown document to add
+     */
+    void addMarkdown(Object markdown);
+
+    /**
      * Retrieves the chat history.
      *
      * @return a list of ChatMessage objects representing the chat history

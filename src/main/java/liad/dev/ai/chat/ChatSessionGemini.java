@@ -51,6 +51,15 @@ public class ChatSessionGemini implements IChatSession {
     }
 
     @Override
+    public void addMarkdown(Object markdown) {
+        if (markdown instanceof byte[]) {
+            parts.add(Part.fromBytes((byte[]) markdown, "text/markdown"));
+        } else {
+            throw new IllegalArgumentException("markdown must be a byte array");
+        }
+    }
+
+    @Override
     public List<ChatMessage> getHistory() {
         List<ChatMessage> chatMessages = new ArrayList<>();
         List<Content> history = this.chat.getHistory(true);
