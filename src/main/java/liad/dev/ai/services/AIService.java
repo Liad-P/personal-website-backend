@@ -28,7 +28,9 @@ public class AIService {
     final static String DEFAULT_DOCUMENT = "Liad-CV.pdf";
     
     @ConfigProperty(name = "CONTEXT_DOCUMENT_IDS", defaultValue = DEFAULT_DOCUMENT)
-    Optional<List<String>> documents;
+    String documentsAsString;
+
+    List<String> documents;
 
     Map<String, IChatSession> chatSessions = new HashMap<>();
 
@@ -40,7 +42,8 @@ public class AIService {
 
     public IChatSession initializeChatSession(String sessionID) {
         var chatSession = aiClient.createChatSession(sessionID);
-        this.documents.get().forEach(document -> {
+        this.documents = this.documentsAsString != null ? List.of(this.documentsAsString.split("[;]")) : List.of(DEFAULT_DOCUMENT);
+        this.documents.forEach(document -> {
             try {
                 if (document == null || document.isEmpty()) {
                     // Make sure there's always at least one document to load
