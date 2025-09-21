@@ -5,6 +5,10 @@ set -e
 
 # Sets variables like the $SERVICE_ACCOUNT_EMAIL
 # Load service account email and other variables
+if [[ ! -f "secrets/.envOther" ]]; then
+  echo "Error: secrets/.envOther file not found."
+  exit 1
+fi
 source secrets/.envOther
 
 if [[ -z "$SERVICE_ACCOUNT_EMAIL" ]]; then
@@ -15,6 +19,10 @@ fi
 
 ENV_FILE=".env"
 PROJECT_ID=$(gcloud config get-value project)
+if [[ -z "$PROJECT_ID" ]]; then
+  echo "Error: PROJECT_ID is not set."
+  exit 1
+fi
 
 DOCKER_CONTAINER_REF="gcr.io/$PROJECT_ID/website-backend:latest"
 
@@ -45,19 +53,26 @@ fi
 # Produces some thing that looks like: DB_HOST=DB_HOST:latest,DB_PORT=DB_PORT:latest,API_KEY=API_KEY:latest
 ENV_VARS=$(grep -v '^#' "$ENV_FILE" | grep -v '^$' | awk -F= '{print $1"="$1":latest"}' | paste -sd, -)
 
-if [[ -n "${CORS_ORIGINS}" ]]; then
+CONFIG_ENV="secrets/.envConfig"
+ENV_CONFIG_VARS=$(grep -v '^#' "$CONFIG_ENV" | grep -v '^$' | awk -F= '{print $1"="$2}' | paste -sd, -)
+
+if [[ -n "$CORS_ORIGINS" ]]; then
   echo "CORS_ORIGINS is set to a non-empty value: '$CORS_ORIGINS'."
   gcloud run deploy backend-website-service \
     --image "$DOCKER_CONTAINER_REF" \
-    --set-env-vars "QUARKUS_HTTP_CORS_ORIGINS=$CORS_ORIGINS,CORS_ORIGINS=$CORS_ORIGINS" \
+    --set-env-vars "QUARKUS_HTTP_CORS_ORIGINS=$CORS_ORIGINS,$ENV_CONFIG_VARS" \
     --set-secrets="$ENV_VARS" \
-    --region=us-central1
+    --region=us-central1 \
+    --allow-unauthenticated
 else
   echo "CORS_ORIGINS is unset or empty."
   gcloud run deploy backend-website-service \
     --image "$DOCKER_CONTAINER_REF" \
+    --set-env-vars "$ENV_CONFIG_VARS" \
     --set-secrets="$ENV_VARS" \
-    --region=us-central1
+    --region=us-central1 \
+    --allow-unauthenticated
 fi
+
 
 
