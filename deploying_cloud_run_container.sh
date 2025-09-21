@@ -56,23 +56,50 @@ ENV_VARS=$(grep -v '^#' "$ENV_FILE" | grep -v '^$' | awk -F= '{print $1"="$1":la
 CONFIG_ENV="secrets/.envConfig"
 ENV_CONFIG_VARS=$(grep -v '^#' "$CONFIG_ENV" | grep -v '^$' | awk -F= '{print $1"="$2}' | paste -sd, -)
 
-if [[ -n "$CORS_ORIGINS" ]]; then
-  echo "CORS_ORIGINS is set to a non-empty value: '$CORS_ORIGINS'."
-  gcloud run deploy backend-website-service \
-    --image "$DOCKER_CONTAINER_REF" \
-    --set-env-vars "QUARKUS_HTTP_CORS_ORIGINS=$CORS_ORIGINS,$ENV_CONFIG_VARS" \
-    --set-secrets="$ENV_VARS" \
-    --region=us-central1 \
-    --allow-unauthenticated
+REGION="us-central1"
+SERVICE_NAME="backend-website-service"
+
+if gcloud run services describe "$SERVICE_NAME" --region "$REGION" --project "$PROJECT_ID" &>/dev/null; then
+  echo "Service '$SERVICE_NAME' exists. Updating the service..."
+  # Update the existing service
+  if [[ -n "$CORS_ORIGINS" ]]; then
+    echo "CORS_ORIGINS is set to a non-empty value: '$CORS_ORIGINS'."
+    gcloud run services update "$SERVICE_NAME" \
+      --image "$DOCKER_CONTAINER_REF" \
+      --set-env-vars "QUARKUS_HTTP_CORS_ORIGINS=$CORS_ORIGINS,$ENV_CONFIG_VARS" \
+      --set-secrets="$ENV_VARS" \
+      --region "$REGION" 
+  else
+    echo "CORS_ORIGINS is unset or empty."
+    gcloud run services update "$SERVICE_NAME" \
+      --image "$DOCKER_CONTAINER_REF" \
+      --set-env-vars "$ENV_CONFIG_VARS" \
+      --set-secrets="$ENV_VARS" \
+      --region "$REGION" 
+  fi
 else
-  echo "CORS_ORIGINS is unset or empty."
-  gcloud run deploy backend-website-service \
-    --image "$DOCKER_CONTAINER_REF" \
-    --set-env-vars "$ENV_CONFIG_VARS" \
-    --set-secrets="$ENV_VARS" \
-    --region=us-central1 \
-    --allow-unauthenticated
+  echo "Service '$SERVICE_NAME' does not exist. Creating a new service..."
+  # Deploy a new service
+  if [[ -n "$CORS_ORIGINS" ]]; then
+    echo "CORS_ORIGINS is set to a non-empty value: '$CORS_ORIGINS'."
+    gcloud run deploy "$SERVICE_NAME" \
+      --image "$DOCKER_CONTAINER_REF" \
+      --set-env-vars "QUARKUS_HTTP_CORS_ORIGINS=$CORS_ORIGINS,$ENV_CONFIG_VARS" \
+      --set-secrets="$ENV_VARS" \
+      --region "$REGION" \
+      --allow-unauthenticated
+  else
+    echo "CORS_ORIGINS is unset or empty."
+    gcloud run deploy "$SERVICE_NAME" \
+      --image "$DOCKER_CONTAINER_REF" \
+      --set-env-vars "$ENV_CONFIG_VARS" \
+      --set-secrets="$ENV_VARS" \
+      --region "$REGION" \
+      --allow-unauthenticated
+  fi
 fi
+
+
 
 
 
